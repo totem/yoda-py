@@ -1,4 +1,4 @@
 yoda-py
 =======
 
-Python Library for yoda proxy
+Python Client Library for yoda proxy
