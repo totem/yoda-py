@@ -2,7 +2,7 @@ __author__ = 'sukrit'
 
 import etcd
 import time
-from .model import Host, Location
+from yoda.model import Host, Location
 
 
 def as_upstream(app_name, app_version, private_port):
@@ -81,6 +81,19 @@ class Client:
         self.etcd_cl.set(node_key, endpoint, ttl=ttl)
 
 
+    def __etcd_safe_delete(self, key, **kwargs):
+        try:
+            self.etcd_cl.delete(key, **kwargs)
+        except KeyError:
+            #Ignore
+            pass
+
+    def remove_node(self, upstream, node_name):
+        node_key = '{etcd_base}/upstreams/{upstream}/endpoints/{node}' \
+            .format(
+            etcd_base=self.etcd_base, upstream=upstream, node=node_name)
+        self.__etcd_safe_delete(node_key)
+
     def wire_proxy(self, host):
         for location in host.locations:
             location_base = \
@@ -99,11 +112,11 @@ class Client:
     def unwire_proxy(self, hostname, upstreams=[]):
         host_base = '{etcd_base}/hosts/{hostname}'.format(
             etcd_base=self.etcd_base, hostname=hostname)
-        self.etcd_cl.delete(host_base, recursive=True)
+        self.__etcd_safe_delete(host_base, recursive=True)
         for upstream in upstreams:
             upstream_base = '{etcd_base}/upstreams/{upstream}'.format(
                 etcd_base=self.etcd_base, upstream=upstream)
-            self.etcd_cl.delete(upstream_base, recursive=True)
+            self.__etcd_safe_delete(upstream_base, recursive=True)
 
 
 
@@ -111,8 +124,10 @@ if __name__ == "__main__":
     client = Client(etcd_host='etcd.melt.sh', etcd_base='/yoda-not-production')
     upstream=as_upstream('totem-spec-python', '1409692366903', 8080)
     print(client.get_nodes(upstream))
-    client.wait_for_nodes(upstream, timeout=15)
+    client.wait_for_nodes(upstream, timeout=60)
     client.wire_proxy(
         Host('spec-python.cu.melt.sh', locations=[
             Location(upstream)
         ]))
+    client.unwire_proxy('spec-python.cu.melt.sh', upstreams=[upstream])
+    client.unwire_proxy('spec-python.cu.melt.sh', upstreams=[upstream])
