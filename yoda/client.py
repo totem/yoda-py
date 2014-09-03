@@ -2,7 +2,16 @@ __author__ = 'sukrit'
 
 import etcd
 import time
-from yoda import as_upstream, as_endpoint, Host, Location
+from .model import Host, Location
+
+
+def as_upstream(app_name, app_version, private_port):
+    return '%s-%s-%s' % (app_name, app_version, private_port)
+
+
+def as_endpoint(backend_host, backend_port):
+    return '%s-%s'
+
 
 class Client:
     """
