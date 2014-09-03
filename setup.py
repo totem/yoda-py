@@ -2,7 +2,7 @@ from setuptools import setup
 import sys
 
 
-if not sys.version_info[0] != 3:
+if sys.version_info[0] != 3:
     print("Sorry, Python 3 is required")
     exit()
 
