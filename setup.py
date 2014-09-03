@@ -10,7 +10,7 @@ with open('./requirements.txt') as reqs_txt:
     requirements = [line for line in reqs_txt]
 
 setup(
-    name="docker-py",
+    name="yoda-py",
     version="0.0.1",
     description="Python client for Docker.",
     author='Sukrit Khera',
