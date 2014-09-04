@@ -1,10 +1,4 @@
 from setuptools import setup
-import sys
-
-
-if sys.version_info[0] != 3:
-    print("Sorry, Python 3 is required")
-    exit()
 
 with open('./requirements.txt') as reqs_txt:
     requirements = [line for line in reqs_txt]
