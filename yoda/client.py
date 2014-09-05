@@ -2,6 +2,7 @@ __author__ = 'sukrit'
 
 import etcd
 import time
+import os
 from yoda.model import Host, Location
 
 
@@ -97,19 +98,29 @@ class Client:
         self.__etcd_safe_delete(node_key)
 
     def wire_proxy(self, host):
+        mapped_locations = []
+        locations_key = '{etcd_base}/hosts/{hostname}/locations'.format(
+            etcd_base=self.etcd_base, hostname=host.hostname
+        )
         for location in host.locations:
-            location_base = \
-                '{etcd_base}/hosts/{hostname}/locations/{location_name}' \
-                    .format(etcd_base=self.etcd_base, hostname=host.hostname,
-                            location_name=location.location_name)
-            self.etcd_cl.set('%s/path'%(location_base), location.path)
+            location_key = '%s/%s' %(locations_key, location.location_name)
+            self.etcd_cl.set('%s/path'%(location_key), location.path)
             for acl in location.allowed_acls:
-                self.etcd_cl.set('%s/acls/allowed/%s'%(location_base, acl),
+                self.etcd_cl.set('%s/acls/allowed/%s'%(location_key, acl),
                                  acl)
             for acl in location.denied_acls:
-                self.etcd_cl.set('%s/acls/denied/%s'%(location_base, acl),
+                self.etcd_cl.set('%s/acls/denied/%s'%(location_key, acl),
                                  acl)
-            self.etcd_cl.set('%s/upstream' % location_base, location.upstream)
+            self.etcd_cl.set('%s/upstream' % location_key, location.upstream)
+            mapped_locations.append(location.location_name)
+
+        #Now cleanup unmapped paths
+        for location in self.etcd_cl.read(locations_key,
+                                           consistent=True).children:
+            location_name = os.path.basename(location.key)
+            if location_name not in mapped_locations:
+                self.__etcd_safe_delete(location.key, recursive=True)
+
 
     def unwire_proxy(self, hostname, upstreams=[]):
         host_base = '{etcd_base}/hosts/{hostname}'.format(
@@ -123,10 +134,10 @@ class Client:
 
 
 if __name__ == "__main__":
-    client = Client(etcd_host='etcd.melt.sh', etcd_base='/yoda-not-production')
+    client = Client(etcd_host='localhost', etcd_base='/yoda-local')
     upstream=as_upstream('totem-spec-python', '1409692366903', 8080)
     print(client.get_nodes(upstream))
-    client.wait_for_nodes(upstream, timeout=60)
+    #client.wait_for_nodes(upstream, timeout=60)
     client.wire_proxy(
         Host('spec-python.cu.melt.sh', locations=[
             Location(upstream)
