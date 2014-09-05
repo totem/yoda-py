@@ -17,8 +17,8 @@ class Client:
     """
     Yoda Client class
     """
-    def __init__(self, etcd_cl=None, etcd_port=4001,
-                 etcd_host='localhost', etcd_base='/yoda' ):
+    def __init__(self, etcd_cl=None, etcd_port=None,
+                 etcd_host=None, etcd_base=None ):
         """
         Initializes etcd client.
         :param etcd_cl:
@@ -27,10 +27,12 @@ class Client:
         :return:
         """
         if not etcd_cl:
-            self.etcd_cl = etcd.Client(host=etcd_host, port=etcd_port)
+            self.etcd_cl = etcd.Client(
+                host=etcd_host or 'localhost',
+                port=etcd_port or 4001)
         else:
             self.etcd_cl = etcd_cl
-        self.etcd_base = etcd_base
+        self.etcd_base = etcd_base or '/yoda'
 
     def get_nodes(self, upstream, wait=False, wait_timeout=10):
         """
