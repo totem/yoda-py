@@ -16,7 +16,7 @@ class Location:
         self.denied_acls = denied_acls
 
     def __str__(self):
-        str(self.__dict__)
+        return str(self.__dict__)
 
     def __eq__(self, other):
         return self.upstream == other.upstream and \
@@ -32,7 +32,7 @@ class Host:
         self.hostname = hostname
 
     def __str__(self):
-        str(self.__dict__)
+        return str(self.__dict__)
 
     def __eq__(self, other):
         return self.locations == other.locations and \
