@@ -76,12 +76,17 @@ class Client:
         raise TimeoutError("Timed out waiting for at-least %d node(s) for "
                            "upstream %s" % (min_nodes, upstream))
 
-
-    def discover_node(self, upstream, node_name, endpoint, ttl=300):
+    def discover_node(self, upstream, node_name, endpoint, ttl=120):
         node_key = '{etcd_base}/upstreams/{upstream}/endpoints/{node}' \
             .format(
             etcd_base=self.etcd_base, upstream=upstream, node=node_name)
         self.etcd_cl.set(node_key, endpoint, ttl=ttl)
+
+    def discover_proxy_node(self, node_name, host='172.17.42.1', ttl=300):
+        node_key = '{etcd_base}/proxy-nodes/{node}' \
+            .format(
+            etcd_base=self.etcd_base, node=node_name)
+        self.etcd_cl.set(node_key, host, ttl=ttl)
 
 
     def __etcd_safe_delete(self, key, **kwargs):

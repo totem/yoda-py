@@ -4,6 +4,7 @@ import re
 
 INVALID_LOCATION_CHARS = re.compile('[^A-Za-z\\-0-9]+')
 
+
 class Location:
     def __init__(self, upstream, path='/', location_name=None,
                  allowed_acls=['public'], denied_acls=['global-black-list'],
