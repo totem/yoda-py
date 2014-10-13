@@ -1,7 +1,6 @@
 __author__ = 'sukrit'
 
 import etcd
-import time
 import os
 from yoda.model import Host, Location
 
@@ -16,7 +15,7 @@ def as_endpoint(backend_host, backend_port):
 
 class Client:
     """
-    Yoda Client class
+    Yoda Client that uses etcd API to control the proxy,
     """
     def __init__(self, etcd_cl=None, etcd_port=None,
                  etcd_host=None, etcd_base=None):
@@ -52,29 +51,6 @@ class Client:
             return dict()
         return dict((endpoint.key, endpoint.value)
                     for endpoint in endpoints.children)
-
-    def wait_for_nodes(self, upstream, min_nodes=1, timeout=300,
-                       retry_wait=10):
-        """
-        Waits for minimal no. of nodes to be available for a given upstream
-        :param upstream:
-        :param min_nodes:
-        :param timeout: timeout in seconds
-        :param retry_wait:
-        :return: Dictionary of nodes for the upstream
-        :rtype: dict
-        :raises:
-            TimeoutError: If timed out waiting for the nodes.
-        """
-        timer = 0
-        while timer < timeout:
-            nodes = self.get_nodes(upstream)
-            if len(nodes) >= min_nodes:
-                return nodes
-            time.sleep(retry_wait)
-            timer += retry_wait
-        raise TimeoutError("Timed out waiting for at-least %d node(s) for "
-                           "upstream %s" % (min_nodes, upstream))
 
     def discover_node(self, upstream, node_name, endpoint, ttl=120,
                       mode='http'):
