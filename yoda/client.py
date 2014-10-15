@@ -67,7 +67,7 @@ class Client:
             .format(etcd_base=self.etcd_base, upstream=upstream)
         node_key = '{upstream_key}/endpoints/{node}' \
             .format(upstream_key=upstream_key, node=node_name)
-        self.etcd_cl.set('%s/mode' % upstream_key, endpoint, ttl=ttl)
+        self.etcd_cl.set('%s/mode' % upstream_key, mode, ttl=ttl)
         self.etcd_cl.set(node_key, endpoint, ttl=ttl)
 
     def discover_proxy_node(self, node_name, host='172.17.42.1', ttl=300):
