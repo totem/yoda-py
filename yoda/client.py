@@ -54,9 +54,20 @@ class Client:
 
     def discover_node(self, upstream, node_name, endpoint, ttl=120,
                       mode='http'):
-        node_key = '{etcd_base}/upstreams/{upstream}/endpoints/{node}' \
-            .format(etcd_base=self.etcd_base, upstream=upstream,
-                    node=node_name)
+        """
+        Discover nodes for a given upstream
+        :param upstream: Upstream for the node.
+        :param node_name: Name of the node to be discovered
+        :param endpoint: Discover endpoint (host:port)
+        :param ttl: Time to live for Etcd record
+        :param mode: tcp or http
+        :return:
+        """
+        upstream_key = '{etcd_base}/upstreams/{upstream}' \
+            .format(etcd_base=self.etcd_base, upstream=upstream)
+        node_key = '{upstream_key}/endpoints/{node}' \
+            .format(upstream_key=upstream_key, node=node_name)
+        self.etcd_cl.set('%s/mode' % upstream_key, endpoint, ttl=ttl)
         self.etcd_cl.set(node_key, endpoint, ttl=ttl)
 
     def discover_proxy_node(self, node_name, host='172.17.42.1', ttl=300):
