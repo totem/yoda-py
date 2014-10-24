@@ -5,8 +5,26 @@ import os
 from yoda.model import Host, Location
 
 
-def as_upstream(app_name, app_version, private_port):
-    return '%s-%s-%s' % (app_name, app_version, private_port)
+def as_upstream(app_name, private_port, app_version=None):
+    """
+    Creates upstream using application name, private port and version.
+
+    :param app_name: Application Name
+    :type app_name: str
+    :param private_port: Private port for application (e.g. 8080)
+    :type private_port: str or int
+    :param app_version: Optional application version to be used for creating
+     upstream. Defaults to None.
+    :type app_version: str
+    :return: String representing Upstream for yoda.
+    :rtype: str
+    """
+    if app_version:
+        # Used for Blue Green Deploys
+        return '%s-%s-%s' % (app_name, app_version, private_port)
+    else:
+        # Used for A/B, Red Green deploy
+        return '%s-%s' % (app_name, private_port)
 
 
 def as_endpoint(backend_host, backend_port):
