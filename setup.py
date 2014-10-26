@@ -5,7 +5,7 @@ with open('./requirements.txt') as reqs_txt:
 
 setup(
     name="yoda-py",
-    version="0.0.1",
+    version="0.1.0",
     description="Python client for Docker.",
     author='Sukrit Khera',
     packages=['yoda'],
