@@ -21,6 +21,9 @@ class Location:
     def __str__(self):
         return str(self.__dict__)
 
+    def __repr__(self):
+        return 'Location(%s)' % str(self)
+
     def __eq__(self, other):
         return self.upstream == other.upstream and \
             self.path == other.path and \
@@ -45,6 +48,9 @@ class Host:
 
     def __str__(self):
         return str(self.__dict__)
+
+    def __repr__(self):
+        return 'Host(%s)' % str(self)
 
     def __eq__(self, other):
         return self.locations == other.locations and \
@@ -85,6 +91,9 @@ class TcpListener:
         :return: str
         """
         return str(self.__dict__)
+
+    def __repr__(self):
+        return 'TcpListener(%s)' % str(self)
 
     def __eq__(self, other):
         return self.name == other.name and \
