@@ -34,6 +34,12 @@ class Host:
     Model representing Host for yoda proxy.
     """
     def __init__(self, hostname, locations):
+        """
+        :param hostname: Hostname for proxy (e.g.: myapp.example.com)
+        :type hostname: str
+        :param locations: List of Location
+        :type locations: list
+        """
         self.locations = locations
         self.hostname = hostname
 
