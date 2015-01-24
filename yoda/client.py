@@ -70,22 +70,61 @@ class Client:
         return dict((endpoint.key, endpoint.value)
                     for endpoint in endpoints.children)
 
-    def discover_node(self, upstream, node_name, endpoint, ttl=120,
-                      mode='http'):
+    def register_upstream(self, upstream, mode='http', health_uri=None,
+                          health_timeout=None):
+        """
+        Registers upstream with give name, mode and health check params.
+
+        :param upstream: Upstream (backend) that needs to be registered
+        :type upstream: str
+        :param mode: Proxy mode ('http' or 'tcp'). Defaults to 'http'
+        :type mode: str
+        :param health_uri: URI to be used for http health check. If None,
+            http health check is not executed.
+        :type health_uri: str
+        :param health_timeout: Timeout for healthcheck. (e.g.: '5s'). Defaults
+            to None. If None, it uses haproxy's default timeout for
+            healthcheck
+        :type health_timeout: str
+        :return: None
+        """
+        upstream_key = '%s/upstreams/%s' % (self.etcd_base, upstream)
+        self.etcd_cl.set('%s/mode' % upstream_key, mode)
+        if health_uri:
+            self.etcd_cl.set('%s/health/uri' % upstream_key, health_uri)
+        if health_timeout:
+            self.etcd_cl.set('%s/health/timeout' % upstream_key,
+                             health_timeout)
+
+    def remove_upstream(self, upstream):
+        """
+        Removes upstream with given name if it exists.
+
+        :param upstream: Name of upstream (or backend)
+        :type upstream: str
+        :return:None
+        """
+        self.__etcd_safe_delete('%s/upstreams/%s' % (self.etcd_base, upstream),
+                                recursive=True)
+
+    def discover_node(self, upstream, node_name, endpoint, ttl=120):
         """
         Discover nodes for a given upstream
+
         :param upstream: Upstream for the node.
+        :type upstream: str
         :param node_name: Name of the node to be discovered
+        :type node_name: str
         :param endpoint: Discover endpoint (host:port)
+        :type endpoint: str
         :param ttl: Time to live for Etcd record
-        :param mode: tcp or http
+        :type ttl: int
         :return:
         """
         upstream_key = '{etcd_base}/upstreams/{upstream}' \
             .format(etcd_base=self.etcd_base, upstream=upstream)
         node_key = '{upstream_key}/endpoints/{node}' \
             .format(upstream_key=upstream_key, node=node_name)
-        self.etcd_cl.set('%s/mode' % upstream_key, mode, ttl=ttl)
         self.etcd_cl.set(node_key, endpoint, ttl=ttl)
 
     def discover_proxy_node(self, node_name, host='172.17.42.1', ttl=300):
