@@ -71,21 +71,24 @@ class Client:
                     for endpoint in endpoints.children)
 
     def register_upstream(self, upstream, mode='http', health_uri=None,
-                          health_timeout=None):
+                          health_timeout=None, health_interval=None):
         """
         Registers upstream with give name, mode and health check params.
 
         :param upstream: Upstream (backend) that needs to be registered
         :type upstream: str
-        :param mode: Proxy mode ('http' or 'tcp'). Defaults to 'http'
+        :keyword mode: Proxy mode ('http' or 'tcp'). Defaults to 'http'
         :type mode: str
-        :param health_uri: URI to be used for http health check. If None,
+        :keyword health_uri: URI to be used for http health check. If None,
             http health check is not executed.
         :type health_uri: str
-        :param health_timeout: Timeout for healthcheck. (e.g.: '5s'). Defaults
-            to None. If None, it uses haproxy's default timeout for
-            healthcheck
+        :keyword health_timeout: Timeout for healthcheck. (e.g.: '5s').
+            Defaults to None. If None, it uses haproxy's default timeout for
+            health-check
         :type health_timeout: str
+        :keyword health_interval: Frequency for health check. If None (default)
+            it defaults to value specified in haproxy cfg template.
+        :type health_interval: str
         :return: None
         """
         upstream_key = '%s/upstreams/%s' % (self.etcd_base, upstream)
@@ -95,6 +98,9 @@ class Client:
         if health_timeout:
             self.etcd_cl.set('%s/health/timeout' % upstream_key,
                              health_timeout)
+        if health_interval:
+            self.etcd_cl.set('%s/health/interval' % upstream_key,
+                             health_interval)
 
     def remove_upstream(self, upstream):
         """

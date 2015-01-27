@@ -63,14 +63,15 @@ class TestClient():
         self.etcd_cl.set.assert_called_with('/yoda/upstreams/test/mode',
                                             'http')
 
-    def test_register_upstream_with_uri_and_timeout(self):
+    def test_register_upstream_with_uri_timeout_interval(self):
         """
         Should register upstream with given name, health uri and timeout.
         """
 
         # When: I register upstream with given name, uri and timeout
         self.client.register_upstream('test', health_uri='/',
-                                      health_timeout='5s')
+                                      health_timeout='5s',
+                                      health_interval='5m')
 
         # Then: The upstream gets created successfully.
         self.etcd_cl.set.call_count = 3
@@ -79,6 +80,8 @@ class TestClient():
                                          '/')
         self.etcd_cl.set.assert_any_call('/yoda/upstreams/test/health/timeout',
                                          '5s')
+        self.etcd_cl.set.assert_any_call(
+            '/yoda/upstreams/test/health/interval', '5m')
 
     def test_discover_node(self):
         """
