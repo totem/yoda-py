@@ -1,7 +1,7 @@
-__author__ = 'sukrit'
-
 import etcd
 import os
+
+__author__ = 'sukrit'
 
 
 def as_upstream(app_name, private_port, app_version=None):

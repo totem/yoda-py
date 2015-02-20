@@ -3,7 +3,7 @@
 Python Client Library for yoda proxy
 
 ## Status
-Under Development
+In Test
 
 ## API Documentation
 [http://yoda-py.readthedocs.org](http://yoda-py.readthedocs.org)

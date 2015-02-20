@@ -1,6 +1,6 @@
-__author__ = 'sukrit'
-
 import re
+
+__author__ = 'sukrit'
 
 INVALID_LOCATION_CHARS = re.compile('[^A-Za-z\\-0-9]+')
 
