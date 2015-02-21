@@ -75,7 +75,7 @@ class TestClient():
 
         # Then: The upstream with given name gets removed
         self.etcd_cl.delete.assert_called_with('/yoda/upstreams/test',
-                                               recursive=True)
+                                               recursive=True, dir=True)
 
     def test_register_upstream(self):
         """
@@ -90,6 +90,8 @@ class TestClient():
             '/yoda/upstreams/test/mode', 'http')
         self.etcd_cl.write.assert_called_with(
             '/yoda/upstreams/test', dir=True, ttl=3600)
+        self.etcd_cl.delete.assert_called_once_with(
+            '/yoda/upstreams/test', recursive=True, dir=True)
 
     def test_register_upstream_with_uri_timeout_interval(self):
         """
@@ -111,6 +113,8 @@ class TestClient():
             '/yoda/upstreams/test/health/interval', '5m')
         self.etcd_cl.write.assert_called_with(
             '/yoda/upstreams/test', dir=True, ttl=3600)
+        self.etcd_cl.delete.assert_called_once_with(
+            '/yoda/upstreams/test', recursive=True, dir=True)
 
     def test_discover_node(self):
         """
