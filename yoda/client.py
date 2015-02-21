@@ -94,6 +94,9 @@ class Client:
         :return: None
         """
         upstream_key = '%s/upstreams/%s' % (self.etcd_base, upstream)
+
+        # Delete existing upstream if it exists.
+        self.remove_upstream(upstream)
         self.etcd_cl.write(upstream_key, ttl=ttl, dir=True)
         self.etcd_cl.set('%s/mode' % upstream_key, mode)
         if health_uri:
@@ -114,7 +117,7 @@ class Client:
         :return:None
         """
         self._etcd_safe_delete('%s/upstreams/%s' % (self.etcd_base, upstream),
-                               recursive=True)
+                               recursive=True, dir=True)
 
     def renew_upstream(self, upstream, ttl=3600):
         """
