@@ -1,8 +1,7 @@
-__author__ = 'sukrit'
-
 import etcd
 import os
-from yoda.model import Host, Location
+
+__author__ = 'sukrit'
 
 
 def as_upstream(app_name, private_port, app_version=None):
@@ -71,7 +70,8 @@ class Client:
                     for endpoint in endpoints.children)
 
     def register_upstream(self, upstream, mode='http', health_uri=None,
-                          health_timeout=None, health_interval=None):
+                          health_timeout=None, health_interval=None,
+                          ttl=3600):
         """
         Registers upstream with give name, mode and health check params.
 
@@ -89,9 +89,12 @@ class Client:
         :keyword health_interval: Frequency for health check. If None (default)
             it defaults to value specified in haproxy cfg template.
         :type health_interval: str
+        :keyword ttl: Time to live for upstream directory.
+        :type ttl: int
         :return: None
         """
         upstream_key = '%s/upstreams/%s' % (self.etcd_base, upstream)
+        self.etcd_cl.write(upstream_key, ttl=ttl, dir=True)
         self.etcd_cl.set('%s/mode' % upstream_key, mode)
         if health_uri:
             self.etcd_cl.set('%s/health/uri' % upstream_key, health_uri)
@@ -110,8 +113,21 @@ class Client:
         :type upstream: str
         :return:None
         """
-        self.__etcd_safe_delete('%s/upstreams/%s' % (self.etcd_base, upstream),
-                                recursive=True)
+        self._etcd_safe_delete('%s/upstreams/%s' % (self.etcd_base, upstream),
+                               recursive=True)
+
+    def renew_upstream(self, upstream, ttl=3600):
+        """
+        Renews the TTL for an existing upstream to ensure that it does not get
+        removed.
+
+        :param upstream: Upstream for the node.
+        :keyword ttl: Time to live for Etcd record
+        :type ttl: int
+        :return: None
+        """
+        upstream_key = '%s/upstreams/%s' % (self.etcd_base, upstream)
+        self.etcd_cl.write(upstream_key, ttl=ttl, dir=True, prevExist=True)
 
     def discover_node(self, upstream, node_name, endpoint, ttl=120):
         """
@@ -138,7 +154,7 @@ class Client:
             .format(etcd_base=self.etcd_base, node=node_name)
         self.etcd_cl.set(node_key, host, ttl=ttl)
 
-    def __etcd_safe_delete(self, key, **kwargs):
+    def _etcd_safe_delete(self, key, **kwargs):
         try:
             self.etcd_cl.delete(key, **kwargs)
         except KeyError:
@@ -149,12 +165,12 @@ class Client:
         node_key = '{etcd_base}/upstreams/{upstream}/endpoints/{node}' \
             .format(etcd_base=self.etcd_base, upstream=upstream,
                     node=node_name)
-        self.__etcd_safe_delete(node_key)
+        self._etcd_safe_delete(node_key)
 
     def remove_proxy_node(self, node_name):
         node_key = '{etcd_base}/proxy-nodes/{node}' \
             .format(etcd_base=self.etcd_base, node=node_name)
-        self.__etcd_safe_delete(node_key)
+        self._etcd_safe_delete(node_key)
 
     def update_tcp_listener(self, tcp_listener):
         """
@@ -166,7 +182,8 @@ class Client:
         listener_key = '/global/listeners/tcp/%s' % tcp_listener.name
         self.etcd_cl.set('%s/bind' % listener_key, tcp_listener.bind)
         if tcp_listener.upstream:
-            self.etcd_cl.set('%s/upstream' % listener_key, upstream)
+            self.etcd_cl.set('%s/upstream' % listener_key,
+                             tcp_listener.upstream)
 
         def next_acl(acls):
             for acl in acls:
@@ -190,7 +207,7 @@ class Client:
         """
         listener_key = '{etcd_base}/global/listeners/tcp/{listener}' \
             .format(etcd_base=self.etcd_base, node=listener_name)
-        self.__etcd_safe_delete(listener_key)
+        self._etcd_safe_delete(listener_key)
 
     def wire_proxy(self, host):
         mapped_locations = []
@@ -214,26 +231,13 @@ class Client:
                 locations_key, consistent=True).children:
             location_name = os.path.basename(location.key)
             if location_name not in mapped_locations:
-                self.__etcd_safe_delete(location.key, recursive=True)
+                self._etcd_safe_delete(location.key, recursive=True)
 
     def unwire_proxy(self, hostname, upstreams=[]):
         host_base = '{etcd_base}/hosts/{hostname}'.format(
             etcd_base=self.etcd_base, hostname=hostname)
-        self.__etcd_safe_delete(host_base, recursive=True)
+        self._etcd_safe_delete(host_base, recursive=True)
         for upstream in upstreams:
             upstream_base = '{etcd_base}/upstreams/{upstream}'.format(
                 etcd_base=self.etcd_base, upstream=upstream)
-            self.__etcd_safe_delete(upstream_base, recursive=True)
-
-
-if __name__ == "__main__":
-    client = Client(etcd_host='localhost', etcd_base='/yoda-local')
-    upstream = as_upstream('totem-spec-python', '1409692366903', 8080)
-    print(client.get_nodes(upstream))
-    # client.wait_for_nodes(upstream, timeout=60)
-    client.wire_proxy(
-        Host('spec-python.cu.melt.sh', locations=[
-            Location(upstream)
-        ]))
-    client.unwire_proxy('spec-python.cu.melt.sh', upstreams=[upstream])
-    client.unwire_proxy('spec-python.cu.melt.sh', upstreams=[upstream])
+            self._etcd_safe_delete(upstream_base, recursive=True)
