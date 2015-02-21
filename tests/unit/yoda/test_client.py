@@ -89,7 +89,7 @@ class TestClient():
         self.etcd_cl.set.assert_called_once_with(
             '/yoda/upstreams/test/mode', 'http')
         self.etcd_cl.write.assert_called_with(
-            '/yoda/upstreams/test', dir=True, ttl=3600)
+            '/yoda/upstreams/test', None, dir=True, ttl=3600)
         self.etcd_cl.delete.assert_called_once_with(
             '/yoda/upstreams/test', recursive=True, dir=True)
 
@@ -112,7 +112,7 @@ class TestClient():
         self.etcd_cl.set.assert_any_call(
             '/yoda/upstreams/test/health/interval', '5m')
         self.etcd_cl.write.assert_called_with(
-            '/yoda/upstreams/test', dir=True, ttl=3600)
+            '/yoda/upstreams/test', None, dir=True, ttl=3600)
         self.etcd_cl.delete.assert_called_once_with(
             '/yoda/upstreams/test', recursive=True, dir=True)
 
@@ -150,7 +150,7 @@ class TestClient():
 
         # Then: My upstream gets registered as expected
         self.etcd_cl.write.assert_called_with(
-            '/yoda/upstreams/mock', dir=True, ttl=3600, prevExist=True)
+            '/yoda/upstreams/mock', None, dir=True, ttl=3600, prevExist=True)
 
     def test_etcd_safe_delete_for_non_existing_key(self):
         # Given: Non existing key

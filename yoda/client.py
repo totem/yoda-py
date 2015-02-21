@@ -97,7 +97,7 @@ class Client:
 
         # Delete existing upstream if it exists.
         self.remove_upstream(upstream)
-        self.etcd_cl.write(upstream_key, ttl=ttl, dir=True)
+        self.etcd_cl.write(upstream_key, None, ttl=ttl, dir=True)
         self.etcd_cl.set('%s/mode' % upstream_key, mode)
         if health_uri:
             self.etcd_cl.set('%s/health/uri' % upstream_key, health_uri)
@@ -130,7 +130,8 @@ class Client:
         :return: None
         """
         upstream_key = '%s/upstreams/%s' % (self.etcd_base, upstream)
-        self.etcd_cl.write(upstream_key, ttl=ttl, dir=True, prevExist=True)
+        self.etcd_cl.write(upstream_key, None, ttl=ttl, dir=True,
+                           prevExist=True)
 
     def discover_node(self, upstream, node_name, endpoint, ttl=120):
         """
