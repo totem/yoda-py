@@ -5,7 +5,7 @@ with open('./requirements.txt') as reqs_txt:
 
 setup(
     name="yoda-py",
-    version="0.1.1",
+    version="0.1.2",
     description="Python client for Yoda.",
     author='Sukrit Khera',
     packages=['yoda'],
