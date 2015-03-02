@@ -10,13 +10,34 @@ class Location:
     Model representing location for yoda proxy.
     """
     def __init__(self, upstream, path='/', location_name=None,
-                 allowed_acls=None, denied_acls=None):
+                 allowed_acls=None, denied_acls=None, force_ssl=False):
+        """
+        Constructor
+
+        :param upstream: Name of the upstream (backend) for this location.
+        :type upstream
+        :keyword path: Backend path to be used for proxy. (Default: '/')
+        :type path: str
+        :keyword location_name: A unique name for this location. If None, path
+            is used as location with '/' replaced by '-'. (Default: None)
+        :type location_name: str
+        :keyword allowed_acls: List of allowed acl names. If None, defaults to
+            ['public']. (Default: None)
+        :type allowed_acls: list
+        :keyword denied_acls: List of denied acl names. If None, defaults to
+            ['global-black-list']. (Default: None)
+        :type allowed_acls: list
+        :keyword force_ssl: Boolean value specifying whether to force ssl for
+            http requests. (Default: False)
+        :type force_ssl: bool
+        """
         self.upstream = upstream
         self.path = path
         self.location_name = INVALID_LOCATION_CHARS.sub(
             '-', location_name or path)
         self.allowed_acls = allowed_acls or ['public']
         self.denied_acls = denied_acls or ['global-black-list']
+        self.force_ssl = force_ssl
 
     def __str__(self):
         return str(self.__dict__)
@@ -26,10 +47,11 @@ class Location:
 
     def __eq__(self, other):
         return self.upstream == other.upstream and \
-            self.path == other.path and \
-            self.location_name == other.location_name and \
-            self.allowed_acls == other.allowed_acls and \
-            self.denied_acls == other.denied_acls
+               self.path == other.path and \
+               self.location_name == other.location_name and \
+               self.allowed_acls == other.allowed_acls and \
+               self.denied_acls == other.denied_acls and \
+               self.force_ssl == other.force_ssl
 
 
 class Host:
@@ -54,7 +76,7 @@ class Host:
 
     def __eq__(self, other):
         return self.locations == other.locations and \
-            self.hostname == other.hostname
+               self.hostname == other.hostname
 
 
 class TcpListener:
@@ -97,7 +119,7 @@ class TcpListener:
 
     def __eq__(self, other):
         return self.name == other.name and \
-            self.bind == other.bind and \
-            self.upstream == other.upstream and \
-            self.allowed_acls == other.allowed_acls and \
-            self.denied_acls == other.denied_acls
+               self.bind == other.bind and \
+               self.upstream == other.upstream and \
+               self.allowed_acls == other.allowed_acls and \
+               self.denied_acls == other.denied_acls

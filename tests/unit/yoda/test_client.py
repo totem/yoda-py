@@ -1,9 +1,11 @@
 """
 Test for yoda.client
 """
+import collections
 import etcd
 from mock import MagicMock
 from nose.tools import eq_
+from yoda import Host, Location
 
 from yoda.client import as_upstream, Client, as_endpoint
 
@@ -160,3 +162,52 @@ class TestClient():
         self.client._etcd_safe_delete('mock')
 
         # Then: No exception is thrown
+
+    def test_wire_proxy(self):
+        """
+        Should wire proxy for existing host.
+        """
+
+        # Given: Existing host
+        host = Host('mockhost', locations=[
+            Location('upstream1', path='/path1'),
+            Location('upstream2', path='/path2', force_ssl=True),
+        ])
+
+        # And: Existing Locations
+        KeyValue = collections.namedtuple('KeyValue', 'key,value')
+        self.etcd_cl.read.return_value.children = [
+            KeyValue('/yoda/hosts/mockhost/locations/-path1', MagicMock()),
+            KeyValue('/yoda/hosts/mockhost/locations/-path3', MagicMock())
+        ]
+
+        # When: I wire proxy for a given host
+        self.client.wire_proxy(host)
+
+        # Then: Proxy gets wired as expected
+        self.etcd_cl.set.assert_any_call(
+            '/yoda/hosts/mockhost/locations/-path1/path', '/path1')
+        self.etcd_cl.set.assert_any_call(
+            '/yoda/hosts/mockhost/locations/-path1/acls/allowed/public',
+            'public')
+        self.etcd_cl.set.assert_any_call(
+            '/yoda/hosts/mockhost/locations/-path1/acls/denied/'
+            'global-black-list', 'global-black-list')
+        self.etcd_cl.set.assert_any_call(
+            '/yoda/hosts/mockhost/locations/-path1/upstream', 'upstream1')
+
+        self.etcd_cl.set.assert_any_call(
+            '/yoda/hosts/mockhost/locations/-path2/path', '/path2')
+        self.etcd_cl.set.assert_any_call(
+            '/yoda/hosts/mockhost/locations/-path2/acls/allowed/public',
+            'public')
+        self.etcd_cl.set.assert_any_call(
+            '/yoda/hosts/mockhost/locations/-path2/acls/denied/'
+            'global-black-list', 'global-black-list')
+        self.etcd_cl.set.assert_any_call(
+            '/yoda/hosts/mockhost/locations/-path2/upstream', 'upstream2')
+        self.etcd_cl.set.assert_any_call(
+            '/yoda/hosts/mockhost/locations/-path2/force-ssl', 'true')
+
+        self.etcd_cl.delete.assert_called_once_with(
+            '/yoda/hosts/mockhost/locations/-path3', recursive=True)
