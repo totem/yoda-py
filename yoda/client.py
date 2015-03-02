@@ -214,6 +214,13 @@ class Client:
         self._etcd_safe_delete(listener_key)
 
     def wire_proxy(self, host):
+        """
+        Wires the proxy for all locations of a given host.
+
+        :param host:
+        :type host: yoda.model.Host
+        :return:
+        """
         mapped_locations = []
         locations_key = '{etcd_base}/hosts/{hostname}/locations'.format(
             etcd_base=self.etcd_base, hostname=host.hostname
@@ -228,6 +235,8 @@ class Client:
                 self.etcd_cl.set('%s/acls/denied/%s' % (location_key, acl),
                                  acl)
             self.etcd_cl.set('%s/upstream' % location_key, location.upstream)
+            if location.force_ssl:
+                self.etcd_cl.set('%s/force-ssl' % location_key, 'true')
             mapped_locations.append(location.location_name)
 
         # Now cleanup unmapped paths
