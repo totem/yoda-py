@@ -211,3 +211,15 @@ class TestClient():
 
         self.etcd_cl.delete.assert_called_once_with(
             '/yoda/hosts/mockhost/locations/-path3', recursive=True)
+
+    def test_setup_aliases(self):
+        # Given: Aliases to be registered for a given hostname
+        hostname = 'mockhost'
+        aliases = ['mockalias1']
+
+        # When: Setup aliases for the given host
+        self.client._setup_aliases(hostname, aliases)
+
+        # Then: Aliases gets registered as expected
+        self.etcd_cl.set.assert_called_once_with(
+            '/yoda/hosts/mockhost/aliases/mockalias1', 'mockalias1')
