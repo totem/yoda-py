@@ -58,15 +58,18 @@ class Host:
     """
     Model representing Host for yoda proxy.
     """
-    def __init__(self, hostname, locations):
+    def __init__(self, hostname, locations, aliases=None):
         """
         :param hostname: Hostname for proxy (e.g.: myapp.example.com)
         :type hostname: str
         :param locations: List of Location
         :type locations: list
+        :keyword aliases: List of alias for the host
+        :type aliases: list
         """
         self.locations = locations
         self.hostname = hostname
+        self.aliases = aliases
 
     def __str__(self):
         return str(self.__dict__)
@@ -76,7 +79,8 @@ class Host:
 
     def __eq__(self, other):
         return self.locations == other.locations and \
-               self.hostname == other.hostname
+               self.hostname == other.hostname and \
+               self.aliases == other.aliases
 
 
 class TcpListener:

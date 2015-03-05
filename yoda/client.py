@@ -213,6 +213,12 @@ class Client:
             .format(etcd_base=self.etcd_base, node=listener_name)
         self._etcd_safe_delete(listener_key)
 
+    def _setup_aliases(self, hostname, aliases):
+        aliases_key = '{etcd_base}/hosts/{hostname}/aliases'.format(
+            etcd_base=self.etcd_base, hostname=hostname)
+        for alias in aliases or []:
+            self.etcd_cl.set('{0}/{1}'.format(aliases_key, alias), alias)
+
     def wire_proxy(self, host):
         """
         Wires the proxy for all locations of a given host.
@@ -245,6 +251,7 @@ class Client:
             location_name = os.path.basename(location.key)
             if location_name not in mapped_locations:
                 self._etcd_safe_delete(location.key, recursive=True)
+        self._setup_aliases(host.hostname, host.aliases)
 
     def unwire_proxy(self, hostname, upstreams=[]):
         host_base = '{etcd_base}/hosts/{hostname}'.format(
