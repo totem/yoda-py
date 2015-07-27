@@ -47,11 +47,11 @@ class Location:
 
     def __eq__(self, other):
         return self.upstream == other.upstream and \
-               self.path == other.path and \
-               self.location_name == other.location_name and \
-               self.allowed_acls == other.allowed_acls and \
-               self.denied_acls == other.denied_acls and \
-               self.force_ssl == other.force_ssl
+            self.path == other.path and \
+            self.location_name == other.location_name and \
+            self.allowed_acls == other.allowed_acls and \
+            self.denied_acls == other.denied_acls and \
+            self.force_ssl == other.force_ssl
 
 
 class Host:
@@ -79,8 +79,8 @@ class Host:
 
     def __eq__(self, other):
         return self.locations == other.locations and \
-               self.hostname == other.hostname and \
-               self.aliases == other.aliases
+            self.hostname == other.hostname and \
+            self.aliases == other.aliases
 
 
 class TcpListener:
@@ -123,7 +123,7 @@ class TcpListener:
 
     def __eq__(self, other):
         return self.name == other.name and \
-               self.bind == other.bind and \
-               self.upstream == other.upstream and \
-               self.allowed_acls == other.allowed_acls and \
-               self.denied_acls == other.denied_acls
+            self.bind == other.bind and \
+            self.upstream == other.upstream and \
+            self.allowed_acls == other.allowed_acls and \
+            self.denied_acls == other.denied_acls
