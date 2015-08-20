@@ -245,8 +245,8 @@ class Client:
                 self.etcd_cl.set('%s/acls/denied/%s' % (location_key, acl),
                                  acl)
             self.etcd_cl.set('%s/upstream' % location_key, location.upstream)
-            if location.force_ssl:
-                self.etcd_cl.set('%s/force-ssl' % location_key, 'true')
+            force_ssl = 'true' if location.force_ssl else 'false'
+            self.etcd_cl.set('%s/force-ssl' % location_key, force_ssl)
             mapped_locations.append(location.location_name)
 
         # Now cleanup unmapped paths

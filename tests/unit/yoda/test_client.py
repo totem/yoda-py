@@ -197,6 +197,8 @@ class TestClient():
             'global-black-list', 'global-black-list')
         self.etcd_cl.set.assert_any_call(
             '/yoda/hosts/mockhost/locations/-path1/upstream', 'upstream1')
+        self.etcd_cl.set.assert_any_call(
+            '/yoda/hosts/mockhost/locations/-path1/force-ssl', 'false')
 
         self.etcd_cl.set.assert_any_call(
             '/yoda/hosts/mockhost/locations/-path2/path', '/path2')
