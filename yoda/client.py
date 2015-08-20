@@ -1,5 +1,5 @@
 import etcd
-import os
+import os.path
 
 __author__ = 'sukrit'
 
@@ -51,12 +51,16 @@ class Client:
             self.etcd_cl = etcd_cl
         self.etcd_base = etcd_base or '/yoda'
 
-    def get_nodes(self, upstream, wait=False, wait_timeout=10):
+    def get_nodes(self, upstream):
         """
         Get nodes for a given upstream
         :param upstream: Upstream whose nodes needs to be determined.
         :type upstream: str
-        :return: Dictionary of nodes for the upstream
+        :return: Dictionary of nodes for the upstream. e.g.:
+        {
+            'node1': 'host1:port1',
+            'node2': 'host2:port1',
+        }
         :rtype: dict
         """
         endpoints_key = '{etcd_base}/upstreams/{upstream}/endpoints'.format(
@@ -66,7 +70,7 @@ class Client:
             endpoints = self.etcd_cl.read(endpoints_key, recursive=True)
         except KeyError:
             return dict()
-        return dict((endpoint.key, endpoint.value)
+        return dict((os.path.basename(endpoint.key), endpoint.value)
                     for endpoint in endpoints.children)
 
     def register_upstream(self, upstream, mode='http', health_uri=None,
@@ -241,8 +245,8 @@ class Client:
                 self.etcd_cl.set('%s/acls/denied/%s' % (location_key, acl),
                                  acl)
             self.etcd_cl.set('%s/upstream' % location_key, location.upstream)
-            if location.force_ssl:
-                self.etcd_cl.set('%s/force-ssl' % location_key, 'true')
+            force_ssl = 'true' if location.force_ssl else 'false'
+            self.etcd_cl.set('%s/force-ssl' % location_key, force_ssl)
             mapped_locations.append(location.location_name)
 
         # Now cleanup unmapped paths

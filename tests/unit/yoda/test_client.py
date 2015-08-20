@@ -5,6 +5,7 @@ import collections
 import etcd
 from mock import MagicMock
 from nose.tools import eq_
+from tests.helper import dict_compare
 from yoda import Host, Location
 
 from yoda.client import as_upstream, Client, as_endpoint
@@ -62,6 +63,7 @@ def test_client_init():
 
 
 class TestClient():
+    KeyValue = collections.namedtuple('KeyValue', 'key,value')
 
     def setup(self):
         self.etcd_cl = MagicMock(spec=etcd.Client)
@@ -195,6 +197,8 @@ class TestClient():
             'global-black-list', 'global-black-list')
         self.etcd_cl.set.assert_any_call(
             '/yoda/hosts/mockhost/locations/-path1/upstream', 'upstream1')
+        self.etcd_cl.set.assert_any_call(
+            '/yoda/hosts/mockhost/locations/-path1/force-ssl', 'false')
 
         self.etcd_cl.set.assert_any_call(
             '/yoda/hosts/mockhost/locations/-path2/path', '/path2')
@@ -223,3 +227,35 @@ class TestClient():
         # Then: Aliases gets registered as expected
         self.etcd_cl.set.assert_called_once_with(
             '/yoda/hosts/mockhost/aliases/mockalias1', 'mockalias1')
+
+    def test_get_nodes(self):
+        # Given: Existing nodes registered in etcd for given upstream
+
+        self.etcd_cl.read.return_value.children = [
+            self.KeyValue('/yoda/upstreams/test/endpoints/testnode1',
+                          'host1:40001'),
+            self.KeyValue('/yoda/upstreams/test/endpoints/testnode2',
+                          'host2:40001'),
+        ]
+
+        # When: I get existing nodes
+        nodes = self.client.get_nodes('test')
+
+        # Then: Expected nodes is returned
+        dict_compare(nodes, {
+            'testnode1': 'host1:40001',
+            'testnode2': 'host2:40001'
+        })
+        self.etcd_cl.read.assert_called_once_with(
+            '/yoda/upstreams/test/endpoints', recursive=True)
+
+    def test_get_nodes_for_non_existing_upstream(self):
+        # Given: Existing nodes registered in etcd for given upstream
+
+        self.etcd_cl.read.side_effect = KeyError
+
+        # When: I get existing nodes
+        nodes = self.client.get_nodes('test')
+
+        # Then: Empty nodes dictionary is returned
+        dict_compare(nodes, {})
