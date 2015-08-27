@@ -13,6 +13,7 @@ from yoda.client import as_upstream, Client, as_endpoint
 MOCK_APP_NAME = 'mock-app'
 MOCK_APP_VERSION = 'mock-version'
 MOCK_PRIVATE_PORT = 80
+DEFAULT_TTL = 120
 
 
 def test_as_upstream_with_version():
@@ -129,9 +130,31 @@ class TestClient():
         self.client.discover_node('test', 'testnode', 'localhost:3434')
 
         # Then: My node gets registered successfully.
-        self.etcd_cl.set.assert_called_once_with(
+        self.etcd_cl.set.assert_any_call(
             '/yoda/upstreams/test/endpoints/testnode', 'localhost:3434',
             ttl=120)
+
+    def test_discover_node_with_meta_info(self):
+        """
+        Should register given node with etcd.
+        """
+
+        # When: I register node of a given upstream.
+        self.client.discover_node('test', 'testnode', 'localhost:3434', meta={
+            'unit-no': 1,
+            'service-name': 'mock@1.service'
+        })
+
+        # Then: My node gets registered successfully.
+        self.etcd_cl.set.assert_any_call(
+            '/yoda/upstreams/test/endpoints/testnode', 'localhost:3434',
+            ttl=DEFAULT_TTL)
+        self.etcd_cl.set.assert_any_call(
+            '/yoda/upstreams/test/endpoints-meta/testnode/unit-no', 1,
+            ttl=DEFAULT_TTL)
+        self.etcd_cl.set.assert_any_call(
+            '/yoda/upstreams/test/endpoints-meta/testnode/service-name',
+            'mock@1.service', ttl=DEFAULT_TTL)
 
     def test_discover_proxy_node(self):
         """
