@@ -300,7 +300,7 @@ class TestClient():
                 '/yoda/upstreams/test/endpoints-meta/testnode2',
                 [
                     self.KeyValue('/yoda/upstreams/test/endpoints-meta/'
-                                  'testnode1/mockkey', 'mockval2'),
+                                  'testnode2/mockkey', 'mockval2'),
                 ])
         ]
 

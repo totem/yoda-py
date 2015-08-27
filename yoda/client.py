@@ -101,10 +101,10 @@ class Client:
             endpoints_meta = self.etcd_cl.read(endpoints_meta_key,
                                                recursive=True)
             endpoints_meta = dict(
-                (os.path.basename(endpoints_meta.key),
+                (os.path.basename(endpoint_meta.key),
                  dict((os.path.basename(node_meta.key), node_meta.value)
-                      for node_meta in endpoints_meta.children))
-                for endpoints_meta in endpoints_meta.children)
+                      for node_meta in endpoint_meta.children))
+                for endpoint_meta in endpoints_meta.children)
         except KeyError:
             endpoints_meta = None
 
