@@ -1,5 +1,6 @@
 import etcd
 import os.path
+from yoda.util import dict_merge
 
 __author__ = 'sukrit'
 
@@ -72,6 +73,42 @@ class Client:
             return dict()
         return dict((os.path.basename(endpoint.key), endpoint.value)
                     for endpoint in endpoints.children)
+
+    def get_nodes_with_meta(self, upstream):
+        """
+        Get nodes with meta information about the node for given upstream
+        and node_name
+        :param upstream: Upstream whose nodes needs to be determined.
+        :type upstream: str
+        :return: Dictionary of nodes for the upstream.
+        :rtype: dict
+        """
+        endpoints_key = '{etcd_base}/upstreams/{upstream}/endpoints'.format(
+            etcd_base=self.etcd_base, upstream=upstream
+        )
+        endpoints_meta_key = \
+            '{etcd_base}/upstreams/{upstream}/endpoints-meta'.format(
+                etcd_base=self.etcd_base, upstream=upstream)
+        try:
+            endpoints = self.etcd_cl.read(endpoints_key, recursive=True)
+            endpoints = dict(
+                (os.path.basename(endpoint.key), {'endpoint': endpoint.value})
+                for endpoint in endpoints.children)
+        except KeyError:
+            endpoints = None
+
+        try:
+            endpoints_meta = self.etcd_cl.read(endpoints_meta_key,
+                                               recursive=True)
+            endpoints_meta = dict(
+                (os.path.basename(endpoints_meta.key),
+                 dict((os.path.basename(node_meta.key), node_meta.value)
+                      for node_meta in endpoints_meta.children))
+                for endpoints_meta in endpoints_meta.children)
+        except KeyError:
+            endpoints_meta = None
+
+        return dict_merge(endpoints, endpoints_meta)
 
     def register_upstream(self, upstream, mode='http', health_uri=None,
                           health_timeout=None, health_interval=None,
