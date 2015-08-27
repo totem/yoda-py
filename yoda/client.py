@@ -90,7 +90,7 @@ class Client:
             '{etcd_base}/upstreams/{upstream}/endpoints-meta'.format(
                 etcd_base=self.etcd_base, upstream=upstream)
         try:
-            endpoints = self.etcd_cl.read(endpoints_key, recursive=True)
+            endpoints = self.etcd_cl.read(endpoints_key, recursive=False)
             endpoints = dict(
                 (os.path.basename(endpoint.key), {'endpoint': endpoint.value})
                 for endpoint in endpoints.children)
