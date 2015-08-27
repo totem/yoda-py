@@ -137,7 +137,7 @@ class Client:
         self.etcd_cl.write(upstream_key, None, ttl=ttl, dir=True,
                            prevExist=True)
 
-    def discover_node(self, upstream, node_name, endpoint, ttl=120):
+    def discover_node(self, upstream, node_name, endpoint, ttl=120, meta=None):
         """
         Discover nodes for a given upstream
 
@@ -149,6 +149,8 @@ class Client:
         :type endpoint: str
         :param ttl: Time to live for Etcd record
         :type ttl: int
+        :keyword meta: Meta information about the endpoint (Default: None)
+        :type meta: dict
         :return:
         """
         upstream_key = '{etcd_base}/upstreams/{upstream}' \
@@ -156,6 +158,11 @@ class Client:
         node_key = '{upstream_key}/endpoints/{node}' \
             .format(upstream_key=upstream_key, node=node_name)
         self.etcd_cl.set(node_key, endpoint, ttl=ttl)
+        for meta_key, meta_value in (meta or {}).items():
+            node_key = '{upstream_key}/endpoints-meta/{node}/{meta_key}' \
+                .format(upstream_key=upstream_key, node=node_name,
+                        meta_key=meta_key)
+            self.etcd_cl.set(node_key, meta_value, ttl=ttl)
 
     def discover_proxy_node(self, node_name, host='172.17.42.1', ttl=300):
         node_key = '{etcd_base}/proxy-nodes/{node}' \
