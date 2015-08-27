@@ -290,18 +290,10 @@ class TestClient():
 
         # And: Meta information for existing nodes
         endpoints_meta.children = [
-            self.KeyChildren(
-                '/yoda/upstreams/test/endpoints-meta/testnode1',
-                [
-                    self.KeyValue('/yoda/upstreams/test/endpoints-meta/'
-                                  'testnode1/mockkey', 'mockval1'),
-                ]),
-            self.KeyChildren(
-                '/yoda/upstreams/test/endpoints-meta/testnode2',
-                [
-                    self.KeyValue('/yoda/upstreams/test/endpoints-meta/'
-                                  'testnode2/mockkey', 'mockval2'),
-                ])
+            self.KeyValue('/yoda/upstreams/test/endpoints-meta/'
+                          'testnode1/mockkey', 'mockval1'),
+            self.KeyValue('/yoda/upstreams/test/endpoints-meta/'
+                          'testnode2/mockkey', 'mockval2')
         ]
 
         # When: I get existing nodes

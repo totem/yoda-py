@@ -90,7 +90,7 @@ class Client:
             '{etcd_base}/upstreams/{upstream}/endpoints-meta'.format(
                 etcd_base=self.etcd_base, upstream=upstream)
         try:
-            endpoints = self.etcd_cl.read(endpoints_key, recursive=False)
+            endpoints = self.etcd_cl.read(endpoints_key, recursive=True)
             endpoints = dict(
                 (os.path.basename(endpoint.key), {'endpoint': endpoint.value})
                 for endpoint in endpoints.children)
@@ -100,15 +100,16 @@ class Client:
         try:
             endpoints_meta = self.etcd_cl.read(endpoints_meta_key,
                                                recursive=True)
-            endpoints_meta = dict(
-                (os.path.basename(endpoint_meta.key),
-                 dict((os.path.basename(node_meta.key), node_meta.value)
-                      for node_meta in endpoint_meta.children))
-                for endpoint_meta in endpoints_meta.children)
+            endpoints_m = dict()
+            for endpoint_meta in endpoints_meta.children:
+                key = os.path.basename(os.path.dirname(endpoint_meta.key))
+                endpoints_m.setdefault(key, {})
+                endpoints_m[key][os.path.basename(endpoint_meta.key)] = \
+                    endpoint_meta.value
         except KeyError:
-            endpoints_meta = None
+            endpoints_m = None
 
-        return dict_merge(endpoints, endpoints_meta)
+        return dict_merge(endpoints, endpoints_m)
 
     def register_upstream(self, upstream, mode='http', health_uri=None,
                           health_timeout=None, health_interval=None,
