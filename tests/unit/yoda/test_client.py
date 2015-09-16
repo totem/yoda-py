@@ -8,7 +8,7 @@ from nose.tools import eq_
 from tests.helper import dict_compare
 from yoda import Host, Location
 
-from yoda.client import as_upstream, Client, as_endpoint
+from yoda.client import as_upstream, Client, as_endpoint, DEFAULT_UPSTREAM_TTL
 
 MOCK_APP_NAME = 'mock-app'
 MOCK_APP_VERSION = 'mock-version'
@@ -95,7 +95,7 @@ class TestClient():
         self.etcd_cl.set.assert_called_once_with(
             '/yoda/upstreams/test/mode', 'http')
         self.etcd_cl.write.assert_called_with(
-            '/yoda/upstreams/test', None, dir=True, ttl=3600)
+            '/yoda/upstreams/test', None, dir=True, ttl=DEFAULT_UPSTREAM_TTL)
         self.etcd_cl.delete.assert_called_once_with(
             '/yoda/upstreams/test', recursive=True, dir=True)
 
@@ -118,7 +118,7 @@ class TestClient():
         self.etcd_cl.set.assert_any_call(
             '/yoda/upstreams/test/health/interval', '5m')
         self.etcd_cl.write.assert_called_with(
-            '/yoda/upstreams/test', None, dir=True, ttl=3600)
+            '/yoda/upstreams/test', None, dir=True, ttl=DEFAULT_UPSTREAM_TTL)
         self.etcd_cl.delete.assert_called_once_with(
             '/yoda/upstreams/test', recursive=True, dir=True)
 

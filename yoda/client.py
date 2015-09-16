@@ -4,6 +4,8 @@ from yoda.util import dict_merge
 
 __author__ = 'sukrit'
 
+DEFAULT_UPSTREAM_TTL = 3600 * 24 * 7
+
 
 def as_upstream(app_name, private_port, app_version=None):
     """
@@ -113,7 +115,7 @@ class Client:
 
     def register_upstream(self, upstream, mode='http', health_uri=None,
                           health_timeout=None, health_interval=None,
-                          ttl=3600):
+                          ttl=DEFAULT_UPSTREAM_TTL):
         """
         Registers upstream with give name, mode and health check params.
 
@@ -131,7 +133,8 @@ class Client:
         :keyword health_interval: Frequency for health check. If None (default)
             it defaults to value specified in haproxy cfg template.
         :type health_interval: str
-        :keyword ttl: Time to live for upstream directory.
+        :keyword ttl: Time to live for upstream directory (in seconds)
+            Defaults to 1 week
         :type ttl: int
         :return: None
         """
