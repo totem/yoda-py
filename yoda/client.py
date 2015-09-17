@@ -1,7 +1,10 @@
 import etcd
 import os.path
+from yoda.util import dict_merge
 
 __author__ = 'sukrit'
+
+DEFAULT_UPSTREAM_TTL = 3600 * 24 * 7
 
 
 def as_upstream(app_name, private_port, app_version=None):
@@ -73,9 +76,46 @@ class Client:
         return dict((os.path.basename(endpoint.key), endpoint.value)
                     for endpoint in endpoints.children)
 
+    def get_nodes_with_meta(self, upstream):
+        """
+        Get nodes with meta information about the node for given upstream
+        and node_name
+        :param upstream: Upstream whose nodes needs to be determined.
+        :type upstream: str
+        :return: Dictionary of nodes for the upstream.
+        :rtype: dict
+        """
+        endpoints_key = '{etcd_base}/upstreams/{upstream}/endpoints'.format(
+            etcd_base=self.etcd_base, upstream=upstream
+        )
+        endpoints_meta_key = \
+            '{etcd_base}/upstreams/{upstream}/endpoints-meta'.format(
+                etcd_base=self.etcd_base, upstream=upstream)
+        try:
+            endpoints = self.etcd_cl.read(endpoints_key, recursive=True)
+            endpoints = dict(
+                (os.path.basename(endpoint.key), {'endpoint': endpoint.value})
+                for endpoint in endpoints.children)
+        except KeyError:
+            endpoints = None
+
+        try:
+            endpoints_meta = self.etcd_cl.read(endpoints_meta_key,
+                                               recursive=True)
+            endpoints_m = dict()
+            for endpoint_meta in endpoints_meta.children:
+                key = os.path.basename(os.path.dirname(endpoint_meta.key))
+                endpoints_m.setdefault(key, {})
+                endpoints_m[key][os.path.basename(endpoint_meta.key)] = \
+                    endpoint_meta.value
+        except KeyError:
+            endpoints_m = None
+
+        return dict_merge(endpoints, endpoints_m)
+
     def register_upstream(self, upstream, mode='http', health_uri=None,
                           health_timeout=None, health_interval=None,
-                          ttl=3600):
+                          ttl=DEFAULT_UPSTREAM_TTL):
         """
         Registers upstream with give name, mode and health check params.
 
@@ -93,7 +133,8 @@ class Client:
         :keyword health_interval: Frequency for health check. If None (default)
             it defaults to value specified in haproxy cfg template.
         :type health_interval: str
-        :keyword ttl: Time to live for upstream directory.
+        :keyword ttl: Time to live for upstream directory (in seconds)
+            Defaults to 1 week
         :type ttl: int
         :return: None
         """

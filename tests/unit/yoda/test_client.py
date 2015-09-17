@@ -8,7 +8,7 @@ from nose.tools import eq_
 from tests.helper import dict_compare
 from yoda import Host, Location
 
-from yoda.client import as_upstream, Client, as_endpoint
+from yoda.client import as_upstream, Client, as_endpoint, DEFAULT_UPSTREAM_TTL
 
 MOCK_APP_NAME = 'mock-app'
 MOCK_APP_VERSION = 'mock-version'
@@ -65,6 +65,7 @@ def test_client_init():
 
 class TestClient():
     KeyValue = collections.namedtuple('KeyValue', 'key,value')
+    KeyChildren = collections.namedtuple('KeyChildren', 'key,children')
 
     def setup(self):
         self.etcd_cl = MagicMock(spec=etcd.Client)
@@ -94,7 +95,7 @@ class TestClient():
         self.etcd_cl.set.assert_called_once_with(
             '/yoda/upstreams/test/mode', 'http')
         self.etcd_cl.write.assert_called_with(
-            '/yoda/upstreams/test', None, dir=True, ttl=3600)
+            '/yoda/upstreams/test', None, dir=True, ttl=DEFAULT_UPSTREAM_TTL)
         self.etcd_cl.delete.assert_called_once_with(
             '/yoda/upstreams/test', recursive=True, dir=True)
 
@@ -117,7 +118,7 @@ class TestClient():
         self.etcd_cl.set.assert_any_call(
             '/yoda/upstreams/test/health/interval', '5m')
         self.etcd_cl.write.assert_called_with(
-            '/yoda/upstreams/test', None, dir=True, ttl=3600)
+            '/yoda/upstreams/test', None, dir=True, ttl=DEFAULT_UPSTREAM_TTL)
         self.etcd_cl.delete.assert_called_once_with(
             '/yoda/upstreams/test', recursive=True, dir=True)
 
@@ -272,6 +273,48 @@ class TestClient():
         self.etcd_cl.read.assert_called_once_with(
             '/yoda/upstreams/test/endpoints', recursive=True)
 
+    def test_get_nodes_with_meta(self):
+        # Given: Existing nodes registered in etcd for given upstream
+
+        endpoints = MagicMock()
+        endpoints_meta = MagicMock()
+
+        self.etcd_cl.read.side_effect = [endpoints, endpoints_meta]
+
+        endpoints.children = [
+            self.KeyValue('/yoda/upstreams/test/endpoints/testnode1',
+                          'host1:40001'),
+            self.KeyValue('/yoda/upstreams/test/endpoints/testnode2',
+                          'host2:40001'),
+        ]
+
+        # And: Meta information for existing nodes
+        endpoints_meta.children = [
+            self.KeyValue('/yoda/upstreams/test/endpoints-meta/'
+                          'testnode1/mockkey', 'mockval1'),
+            self.KeyValue('/yoda/upstreams/test/endpoints-meta/'
+                          'testnode2/mockkey', 'mockval2')
+        ]
+
+        # When: I get existing nodes
+        nodes = self.client.get_nodes_with_meta('test')
+
+        # Then: Expected nodes is returned
+        dict_compare(nodes, {
+            'testnode1': {
+                'endpoint': 'host1:40001',
+                'mockkey': 'mockval1'
+            },
+            'testnode2': {
+                'endpoint': 'host2:40001',
+                'mockkey': 'mockval2'
+            }
+        })
+        self.etcd_cl.read.assert_has_call(
+            '/yoda/upstreams/test/endpoints', recursive=True)
+        self.etcd_cl.read.assert_has_call(
+            '/yoda/upstreams/test/endpoints-meta', recursive=True)
+
     def test_get_nodes_for_non_existing_upstream(self):
         # Given: Existing nodes registered in etcd for given upstream
 
@@ -279,6 +322,17 @@ class TestClient():
 
         # When: I get existing nodes
         nodes = self.client.get_nodes('test')
+
+        # Then: Empty nodes dictionary is returned
+        dict_compare(nodes, {})
+
+    def test_get_nodes__with_meta_for_non_existing_upstream(self):
+        # Given: Existing nodes registered in etcd for given upstream
+
+        self.etcd_cl.read.side_effect = KeyError
+
+        # When: I get existing nodes
+        nodes = self.client.get_nodes_with_meta('test')
 
         # Then: Empty nodes dictionary is returned
         dict_compare(nodes, {})
